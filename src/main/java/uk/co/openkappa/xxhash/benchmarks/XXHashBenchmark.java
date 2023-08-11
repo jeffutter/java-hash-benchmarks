@@ -1,6 +1,7 @@
 package uk.co.openkappa.xxhash.benchmarks;
 
 import org.openjdk.jmh.annotations.*;
+import uk.co.openkappa.xxhash.MemorySegment;
 
 import java.util.concurrent.TimeUnit;
 
@@ -25,5 +26,10 @@ public class XXHashBenchmark {
   @Benchmark
   public long hashCode(HashCode state) {
     return state.hasher.hash(state.data, 0);
+  }
+
+  @Benchmark
+  public long memorySegment(MemorySegmentState state) {
+    return state.hasher.hash(state.data);
   }
 }
