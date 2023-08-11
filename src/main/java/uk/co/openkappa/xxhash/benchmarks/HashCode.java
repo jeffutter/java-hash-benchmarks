@@ -11,6 +11,8 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 @State(Scope.Benchmark)
 public class HashCode {
     @Param({"10", "100", "500", "1000", "2000"})
@@ -60,7 +62,6 @@ public class HashCode {
     static final IntVector H_COEFF_24;
     static final IntVector H_COEFF_32;
 
-
     static {
         int[] x = new int[INT_256_SPECIES.length() * 4];
         x[x.length - 1] = 1;
@@ -83,7 +84,6 @@ public class HashCode {
     }
 
     static class BuiltinHasher implements Hasher32 {
-
         @Override
         public int hash(byte[] data, int _seed) {
             return data.hashCode();
@@ -91,7 +91,6 @@ public class HashCode {
     }
 
     static class SIMDHasher implements Hasher32 {
-
         @Override
         public int hash(byte[] data, int _seed) {
             IntVector h1 = IntVector.fromArray(INT_256_SPECIES, new int[]{1, 0, 0, 0, 0, 0, 0, 0}, 0);
@@ -131,7 +130,9 @@ public class HashCode {
 
     @Setup(Level.Trial)
     public void init() {
-        data = BenchmarkUtils.newByteArray(size);
+//        data = BenchmarkUtils.newByteArray(size);
+        data = new byte[size];
+        ThreadLocalRandom.current().nextBytes(data);
         hasher = impl.create();
     }
 }
