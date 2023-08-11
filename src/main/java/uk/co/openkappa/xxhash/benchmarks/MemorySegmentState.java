@@ -17,7 +17,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @State(Scope.Benchmark)
 public class MemorySegmentState {
-    @Param({"10", "100", "500", "1000", "2000"})
+    @Param({"25", "50", "100", "200"})
     int size;
 
     @Param({"VECTOR"})

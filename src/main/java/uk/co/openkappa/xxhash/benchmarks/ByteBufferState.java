@@ -20,7 +20,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @State(Scope.Benchmark)
 public class ByteBufferState {
-    @Param({"10", "100", "500", "1000", "2000"})
+    @Param({"25", "50", "100", "200"})
     int size;
 
     @Param({"VECTOR", "VECTOR_COPY", "HASH_CODE", "SCALAR"})

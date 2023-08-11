@@ -40,7 +40,7 @@ public class XXHash64State {
     abstract Hasher64 create();
   }
 
-  @Param({"10", "100", "500", "1000", "2000"})
+  @Param({"25", "50", "100", "200"})
   int size;
 
   @Param({"VECTOR", "NO_SWAR", "UNSAFE", "VAR_HANDLE", "JNI"})

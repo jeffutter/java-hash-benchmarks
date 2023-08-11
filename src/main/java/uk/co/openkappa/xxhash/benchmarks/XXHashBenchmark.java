@@ -12,15 +12,15 @@ import java.util.concurrent.TimeUnit;
 //@Fork(value = 1, jvmArgsPrepend = {"--add-modules=jdk.incubator.vector", "-Djdk.incubator.vector.VECTOR_ACCESS_OOB_CHECK=0"})
 public class XXHashBenchmark {
 
-//  @Benchmark
-//  public long xxhash64(XXHash64State state) {
-//    return state.hasher.hash(state.data, 0L);
-//  }
-//
-//  @Benchmark
-//  public long xxhash32(XXHash32State state) {
-//    return state.hasher.hash(state.data, 0);
-//  }
+ @Benchmark
+ public long xxhash64(XXHash64State state) {
+   return state.hasher.hash(state.data, 0L);
+ }
+
+ @Benchmark
+ public long xxhash32(XXHash32State state) {
+   return state.hasher.hash(state.data, 0);
+ }
 
   @Benchmark
   public long ByteBuffer(ByteBufferState state) {

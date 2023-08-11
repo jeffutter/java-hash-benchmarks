@@ -20,10 +20,10 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @State(Scope.Benchmark)
 public class ByteState {
-    @Param({"10", "100", "500", "1000", "2000"})
+    @Param({"25", "50", "100", "200"})
     int size;
 
-    @Param({"VECTOR", "HASH_CODE", "SCALAR"})
+    @Param({"VECTOR", "SCALAR"})
     Impl impl;
 
     byte[] data;
