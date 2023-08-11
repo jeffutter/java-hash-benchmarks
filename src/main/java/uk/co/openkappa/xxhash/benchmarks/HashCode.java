@@ -11,6 +11,7 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 
+import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
 @State(Scope.Benchmark)
@@ -18,7 +19,7 @@ public class HashCode {
     @Param({"10", "100", "500", "1000", "2000"})
     int size;
 
-    @Param({"VECTOR", "BUILTIN"})
+    @Param({"VECTOR", "HASH_CODE", "SCALAR"})
     Impl impl;
 
     byte[] data;
@@ -26,10 +27,17 @@ public class HashCode {
     Hasher32 hasher;
 
     public enum Impl {
-        BUILTIN {
+        HASH_CODE {
             @Override
             Hasher32 create() {
-                return new BuiltinHasher();
+                return new HashCodeHasher();
+            }
+        },
+
+        SCALAR {
+            @Override
+            Hasher32 create() {
+                return new ScalarHasher();
             }
         },
 
@@ -83,10 +91,17 @@ public class HashCode {
         H_COEFF_32 = IntVector.fromArray(INT_256_SPECIES, x, 0);
     }
 
-    static class BuiltinHasher implements Hasher32 {
+    static class HashCodeHasher implements Hasher32 {
         @Override
         public int hash(byte[] data, int _seed) {
             return data.hashCode();
+        }
+    }
+
+    static class ScalarHasher implements Hasher32 {
+        @Override
+        public int hash(byte[] data, int _seed) {
+            return Arrays.hashCode(data);
         }
     }
 
