@@ -12,6 +12,7 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -158,46 +159,28 @@ public class HashCode {
     static class SIMDHasher implements HashCodeI {
         @Override
         public int hash(ByteBuffer data, int _seed) {
-            var origPos = data.position();
             var ms = MemorySegment.ofBuffer(data);
 
             IntVector h1 = IntVector.fromArray(INT_256_SPECIES, new int[]{1, 0, 0, 0, 0, 0, 0, 0}, 0);
             IntVector h2 = IntVector.zero(INT_256_SPECIES);
             IntVector h3 = IntVector.zero(INT_256_SPECIES);
             IntVector h4 = IntVector.zero(INT_256_SPECIES);
-            int i = 0;
-//            for (; i < (data.length & ~(BYTE_256_SPECIES.length() - 1)); i += BYTE_256_SPECIES.length()) {
-            var initLen = data.remaining();
-            var bound = initLen & ~(BYTE_256_SPECIES.length() - 1);
-            while(i < (initLen & ~(BYTE_256_SPECIES.length() - 1))) {
-//                ByteVector b = ByteVector.fromArray(BYTE_64_SPECIES, data, i);
-                ByteVector b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, ms, i, ByteOrder.nativeOrder());
-//                data.position(data.position() + BYTE_64_SPECIES.length());
 
+            int i = 0;
+            for (; i < (ms.byteSize() & ~(BYTE_256_SPECIES.length() - 1)); i += BYTE_256_SPECIES.length()) {
+                ByteVector b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, ms, i, ByteOrder.nativeOrder());
                 IntVector x = (IntVector) b.castShape(INT_256_SPECIES, 0);
                 h1 = h1.mul(H_COEFF_31_TO_32).add(x.mul(H_COEFF_32));
 
-//                b = ByteVector.fromArray(BYTE_64_SPECIES, data, i + BYTE_64_SPECIES.length());
-//                b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, MemorySegment.ofBuffer(data.slice(0, BYTE_64_SPECIES.length())), 0, ByteOrder.nativeOrder());
-//                data.position(data.position() + BYTE_64_SPECIES.length());
                 b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, ms, i + BYTE_64_SPECIES.length(), ByteOrder.nativeOrder());
-
                 x = (IntVector) b.castShape(INT_256_SPECIES, 0);
                 h2 = h2.mul(H_COEFF_31_TO_32).add(x.mul(H_COEFF_24));
 
-//                b = ByteVector.fromArray(BYTE_64_SPECIES, data, i + BYTE_64_SPECIES.length() * 2);
-//                b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, MemorySegment.ofBuffer(data.slice(0, BYTE_64_SPECIES.length())), 0, ByteOrder.nativeOrder());
                 b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, ms, i + BYTE_64_SPECIES.length() * 2L, ByteOrder.nativeOrder());
-                data.position(data.position() + BYTE_64_SPECIES.length());
-
                 x = (IntVector) b.castShape(INT_256_SPECIES, 0);
                 h3 = h3.mul(H_COEFF_31_TO_32).add(x.mul(H_COEFF_16));
 
-//                b = ByteVector.fromArray(BYTE_64_SPECIES, data, i + BYTE_64_SPECIES.length() * 3);
-//                b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, MemorySegment.ofBuffer(data.slice(0, BYTE_64_SPECIES.length())), 0, ByteOrder.nativeOrder());
                 b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, ms, i + BYTE_64_SPECIES.length() * 3L, ByteOrder.nativeOrder());
-//                data.position(BYTE_256_SPECIES.length() * 4);
-
                 x = (IntVector) b.castShape(INT_256_SPECIES, 0);
                 h4 = h4.mul(H_COEFF_31_TO_32).add(x.mul(H_COEFF_8));
 
@@ -208,14 +191,11 @@ public class HashCode {
                     h2.reduceLanes(VectorOperators.ADD) +
                     h3.reduceLanes(VectorOperators.ADD) +
                     h4.reduceLanes(VectorOperators.ADD);
-//            for (; i < data.length; i++) {
-//                sh = 31 * sh + data[i];
-//            }
-            data.position(origPos);
-            while(data.hasRemaining()) {
-               sh = 31 * sh + data.get();
+
+            for(; i < ms.byteSize(); i++) {
+                sh = 31 * sh + ms.get(ValueLayout.OfByte.JAVA_BYTE, i);
             }
-            data.position(origPos);
+
             return sh;
         }
     }
@@ -223,7 +203,6 @@ public class HashCode {
 
     @Setup(Level.Trial)
     public void init() {
-//        data = BenchmarkUtils.newByteArray(size);
         var d = new byte[size];
         ThreadLocalRandom.current().nextBytes(d);
         data = ByteBuffer.wrap(d);

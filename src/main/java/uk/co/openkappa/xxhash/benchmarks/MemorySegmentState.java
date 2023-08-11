@@ -105,36 +105,22 @@ public class MemorySegmentState {
             IntVector h2 = IntVector.zero(INT_256_SPECIES);
             IntVector h3 = IntVector.zero(INT_256_SPECIES);
             IntVector h4 = IntVector.zero(INT_256_SPECIES);
-            int i = 0;
-//            for (; i < (data.length & ~(BYTE_256_SPECIES.length() - 1)); i += BYTE_256_SPECIES.length()) {
-            while(i < (ms.byteSize() & ~(BYTE_256_SPECIES.length() - 1))) {
-//                ByteVector b = ByteVector.fromArray(BYTE_64_SPECIES, data, i);
-                ByteVector b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, ms, i, ByteOrder.nativeOrder());
-//                data.position(data.position() + BYTE_64_SPECIES.length());
 
+            int i = 0;
+            for (; i < (ms.byteSize() & ~(BYTE_256_SPECIES.length() - 1)); i += BYTE_256_SPECIES.length()) {
+                ByteVector b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, ms, i, ByteOrder.nativeOrder());
                 IntVector x = (IntVector) b.castShape(INT_256_SPECIES, 0);
                 h1 = h1.mul(H_COEFF_31_TO_32).add(x.mul(H_COEFF_32));
 
-//                b = ByteVector.fromArray(BYTE_64_SPECIES, data, i + BYTE_64_SPECIES.length());
-//                b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, MemorySegment.ofBuffer(data.slice(0, BYTE_64_SPECIES.length())), 0, ByteOrder.nativeOrder());
-//                data.position(data.position() + BYTE_64_SPECIES.length());
                 b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, ms, i + BYTE_64_SPECIES.length(), ByteOrder.nativeOrder());
-
                 x = (IntVector) b.castShape(INT_256_SPECIES, 0);
                 h2 = h2.mul(H_COEFF_31_TO_32).add(x.mul(H_COEFF_24));
 
-//                b = ByteVector.fromArray(BYTE_64_SPECIES, data, i + BYTE_64_SPECIES.length() * 2);
-//                b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, MemorySegment.ofBuffer(data.slice(0, BYTE_64_SPECIES.length())), 0, ByteOrder.nativeOrder());
                 b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, ms, i + BYTE_64_SPECIES.length() * 2L, ByteOrder.nativeOrder());
-
                 x = (IntVector) b.castShape(INT_256_SPECIES, 0);
                 h3 = h3.mul(H_COEFF_31_TO_32).add(x.mul(H_COEFF_16));
 
-//                b = ByteVector.fromArray(BYTE_64_SPECIES, data, i + BYTE_64_SPECIES.length() * 3);
-//                b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, MemorySegment.ofBuffer(data.slice(0, BYTE_64_SPECIES.length())), 0, ByteOrder.nativeOrder());
                 b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, ms, i + BYTE_64_SPECIES.length() * 3L, ByteOrder.nativeOrder());
-//                data.position(BYTE_256_SPECIES.length() * 4);
-
                 x = (IntVector) b.castShape(INT_256_SPECIES, 0);
                 h4 = h4.mul(H_COEFF_31_TO_32).add(x.mul(H_COEFF_8));
 
@@ -145,12 +131,11 @@ public class MemorySegmentState {
                     h2.reduceLanes(VectorOperators.ADD) +
                     h3.reduceLanes(VectorOperators.ADD) +
                     h4.reduceLanes(VectorOperators.ADD);
-//            for (; i < data.length; i++) {
-//                sh = 31 * sh + data[i];
-//            }
+
             for(; i < ms.byteSize(); i++) {
                 sh = 31 * sh + ms.get(ValueLayout.OfByte.JAVA_BYTE, i);
             }
+
             return sh;
         }
     }
