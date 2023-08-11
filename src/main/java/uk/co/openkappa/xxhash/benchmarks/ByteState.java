@@ -19,47 +19,38 @@ import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
 @State(Scope.Benchmark)
-public class HashCode {
+public class ByteState {
     @Param({"10", "100", "500", "1000", "2000"})
     int size;
 
-    @Param({"VECTOR", "VECTOR_COPY", "HASH_CODE", "SCALAR"})
+    @Param({"VECTOR", "HASH_CODE", "SCALAR"})
     Impl impl;
 
-//    byte[] data;
-    ByteBuffer data;
+    byte[] data;
 
-    HashCodeI hasher;
+    Hasher32 hasher;
 
     public enum Impl {
         HASH_CODE {
             @Override
-            HashCodeI create() {
+            Hasher32 create() {
                 return new HashCodeHasher();
             }
         },
 
         SCALAR {
             @Override
-            HashCodeI create() {
+            Hasher32 create() {
                 return new ScalarHasher();
             }
         },
-
         VECTOR {
             @Override
-            HashCodeI create() {
+            Hasher32 create() {
                 return new SIMDHasher();
             }
-        },
-
-        VECTOR_COPY {
-            @Override
-            HashCodeI create() {
-                return new SIMDHasherCopy();
-            }
         };
-        abstract HashCodeI create();
+        abstract Hasher32 create();
     }
 
 
@@ -103,25 +94,23 @@ public class HashCode {
         H_COEFF_32 = IntVector.fromArray(INT_256_SPECIES, x, 0);
     }
 
-    static class HashCodeHasher implements HashCodeI {
+    static class HashCodeHasher implements Hasher32 {
         @Override
-        public int hash(ByteBuffer data, int _seed) {
+        public int hash(byte[] data, int seed) {
             return data.hashCode();
         }
     }
 
-    static class ScalarHasher implements  HashCodeI {
+    static class ScalarHasher implements  Hasher32 {
         @Override
-        public int hash(ByteBuffer data, int _seed) {
-            return Arrays.hashCode(data.array());
+        public int hash(byte[] data, int seed) {
+            return Arrays.hashCode(data);
         }
     }
 
-    static class SIMDHasherCopy implements HashCodeI {
+    static class SIMDHasher implements Hasher32 {
         @Override
-        public int hash(ByteBuffer bbdata, int _seed) {
-            var data = bbdata.array();
-
+        public int hash(byte[] data, int seed) {
             IntVector h1 = IntVector.fromArray(INT_256_SPECIES, new int[]{1, 0, 0, 0, 0, 0, 0, 0}, 0);
             IntVector h2 = IntVector.zero(INT_256_SPECIES);
             IntVector h3 = IntVector.zero(INT_256_SPECIES);
@@ -156,56 +145,11 @@ public class HashCode {
         }
     }
 
-    static class SIMDHasher implements HashCodeI {
-        @Override
-        public int hash(ByteBuffer data, int _seed) {
-            var ms = MemorySegment.ofBuffer(data);
-
-            IntVector h1 = IntVector.fromArray(INT_256_SPECIES, new int[]{1, 0, 0, 0, 0, 0, 0, 0}, 0);
-            IntVector h2 = IntVector.zero(INT_256_SPECIES);
-            IntVector h3 = IntVector.zero(INT_256_SPECIES);
-            IntVector h4 = IntVector.zero(INT_256_SPECIES);
-
-            int i = 0;
-            for (; i < (ms.byteSize() & ~(BYTE_256_SPECIES.length() - 1)); i += BYTE_256_SPECIES.length()) {
-                ByteVector b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, ms, i, ByteOrder.nativeOrder());
-                IntVector x = (IntVector) b.castShape(INT_256_SPECIES, 0);
-                h1 = h1.mul(H_COEFF_31_TO_32).add(x.mul(H_COEFF_32));
-
-                b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, ms, i + BYTE_64_SPECIES.length(), ByteOrder.nativeOrder());
-                x = (IntVector) b.castShape(INT_256_SPECIES, 0);
-                h2 = h2.mul(H_COEFF_31_TO_32).add(x.mul(H_COEFF_24));
-
-                b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, ms, i + BYTE_64_SPECIES.length() * 2L, ByteOrder.nativeOrder());
-                x = (IntVector) b.castShape(INT_256_SPECIES, 0);
-                h3 = h3.mul(H_COEFF_31_TO_32).add(x.mul(H_COEFF_16));
-
-                b = ByteVector.fromMemorySegment(BYTE_64_SPECIES, ms, i + BYTE_64_SPECIES.length() * 3L, ByteOrder.nativeOrder());
-                x = (IntVector) b.castShape(INT_256_SPECIES, 0);
-                h4 = h4.mul(H_COEFF_31_TO_32).add(x.mul(H_COEFF_8));
-
-                i += BYTE_256_SPECIES.length();
-            }
-
-            int sh = h1.reduceLanes(VectorOperators.ADD) +
-                    h2.reduceLanes(VectorOperators.ADD) +
-                    h3.reduceLanes(VectorOperators.ADD) +
-                    h4.reduceLanes(VectorOperators.ADD);
-
-            for(; i < ms.byteSize(); i++) {
-                sh = 31 * sh + ms.get(ValueLayout.OfByte.JAVA_BYTE, i);
-            }
-
-            return sh;
-        }
-    }
-
 
     @Setup(Level.Trial)
     public void init() {
-        var d = new byte[size];
-        ThreadLocalRandom.current().nextBytes(d);
-        data = ByteBuffer.wrap(d);
+        data = new byte[size];
+        ThreadLocalRandom.current().nextBytes(data);
         hasher = impl.create();
     }
 }

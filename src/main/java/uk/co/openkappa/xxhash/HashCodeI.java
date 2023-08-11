@@ -4,5 +4,5 @@ import java.nio.ByteBuffer;
 
 @FunctionalInterface
 public interface HashCodeI {
-    int hash(ByteBuffer data, int seed);
+    int hash(ByteBuffer data);
 }
