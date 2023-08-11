@@ -1,6 +1,7 @@
 package uk.co.openkappa.xxhash;
 
 import jdk.incubator.vector.LongVector;
+import jdk.incubator.vector.VectorMask;
 import jdk.incubator.vector.VectorShape;
 import jdk.incubator.vector.VectorSpecies;
 
@@ -8,6 +9,8 @@ import static java.lang.reflect.Array.getInt;
 import static java.lang.reflect.Array.getLong;
 import static jdk.incubator.vector.VectorOperators.LSHL;
 import static jdk.incubator.vector.VectorOperators.ROL;
+import static uk.co.openkappa.xxhash.Constants.PRIME64_2;
+import static uk.co.openkappa.xxhash.Constants.PRIME64_1;
 import static uk.co.openkappa.xxhash.Constants.*;
 
 public class VectorXXHash64 implements Hasher64 {
@@ -23,7 +26,8 @@ public class VectorXXHash64 implements Hasher64 {
     int offset = 0;
 
     if (remaining >= 32) {
-      var vector = ((LongVector) L256.fromValues(PRIME64_1 + PRIME64_2, PRIME64_2, 0L, -PRIME64_1)).add(seed);
+//      var vector = ((LongVector) L256.fromValues(PRIME64_1 + PRIME64_2, PRIME64_2, 0L, -PRIME64_1)).add(seed);
+      var vector = LongVector.fromArray(L256, new long[] {PRIME64_1 + PRIME64_2, PRIME64_2, 0L, -PRIME64_1}, 0).add(seed);
       do {
         vector = vector.add(B256.fromArray(input, offset).reinterpretAsLongs().mul(PRIME64_2))
                 .lanewise(ROL, 31)

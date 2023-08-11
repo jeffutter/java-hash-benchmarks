@@ -43,7 +43,7 @@ public class XXHash64State {
   @Param({"10", "100", "500", "1000", "2000"})
   int size;
 
-  @Param({"NO_SWAR", "UNSAFE", "VAR_HANDLE", "JNI"})
+  @Param({"VECTOR", "NO_SWAR", "UNSAFE", "VAR_HANDLE", "JNI"})
   Impl impl;
 
   byte[] data;

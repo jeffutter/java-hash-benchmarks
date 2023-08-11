@@ -13,8 +13,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jmh.version>1.21</jmh.version>
         <lz4.version>1.6.0</lz4.version>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>19</maven.compiler.source>
+        <maven.compiler.target>19</maven.compiler.target>
     </properties>
 
     <dependencyManagement>
@@ -85,6 +85,7 @@
                 <version>3.6.1</version>
                 <configuration>
                     <compilerArgs>
+                        <arg>--enable-preview</arg>
                         <arg>--add-modules</arg>
                         <arg>jdk.incubator.vector</arg>
                     </compilerArgs>
@@ -106,6 +107,7 @@
 
                 <configuration>
                     <argLine>
+                        --enable-preview
                         --add-modules jdk.incubator.vector
                     </argLine>
                 </configuration>
